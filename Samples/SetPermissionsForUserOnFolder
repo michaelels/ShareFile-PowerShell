@@ -1,0 +1,43 @@
+########                                                  ##############################
+######## Skripts are provided as is without any support or liability  ##################
+######## LOAD SNAP-INs                                    ##############################
+
+Add-PSSnapin ShareFile
+
+######## CREDENTIALS FOR SUBDOMAIN                        ##############################
+
+$sfClient = Get-SfClient –Name "Z:\Powershell\ShareFile\YOURSUBDOMAIN.sfps"
+
+
+######## GET FOLDER-ID TO CHANGE or ADD PERMISSIONS       ##############################
+
+$FolderPath = Read-Host -Prompt "Please enter path to folder"
+$OrdnerID = Send-SfRequest -Client $sfClient –Entity Items –Navigation ByPath –Parameters @{“path”=$FolderPath}
+ 
+######## GET Email of User to CHANGE or ADD PERMISSIONS  ################################
+
+$UserEMAIL = Read-Host -Prompt "Please enter eMail Adress"
+
+####### SETTING VALUES FOR PERMISSIONS                   ################################
+
+$Access = New-Object ShareFile.Api.Models.AccessControl
+
+$Access.CanUpload = $false
+$Access.CanDownload = $false
+$Access.CanDelete = $false
+$Access.CanView = $true
+$Access.CanManagePermissions = $false
+$Access.NotifyOnDownload = $false
+$Access.NotifyOnUpload = $false
+$Access.IsOwner = $false
+
+######## Initiating the User via Principal               #################################
+ 
+$Access.Principal = New-Object ShareFile.Api.Models.Principal 
+$Access.Principal.Email = $UserEMAIL
+
+######## Setting the PERMISSIONS                         #################################
+
+Send-SfRequest -Client $sfClient -Method POST -Id $OrdnerID.Id -Entity Items -Navigation AccessControls -Body $Access
+
+######### VALIDATE CHANGES ###############################################################
